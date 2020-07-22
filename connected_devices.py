@@ -34,10 +34,25 @@ def fetch_devices(auth):
         return None
 
     json_string = response.content
-    return filter(None, demjson.decode(json_string)['device'])
+    
+    devices = filter(None, demjson.decode(json_string)['device'])
+
+    # device names are html encoded and need to be cleaned
+    for i in range(len(devices)):
+        devices[i]['name'] = HTMLParser().unescape(devices[i].get('name', "NONE"))
+
+    return devices
 
 def sort_by_ip(devices):
     return sorted(devices, key = lambda i: split_ip(i['ip']))
+
+def devices_list(devices):
+    result = ""
+    for device in devices:
+        if result != "":
+            result += "\n"
+        result += device.get('ip', 'NONE') + ': ' + device.get('name')
+    return result
 
 auth = auth_header()
 
@@ -48,6 +63,4 @@ if devices is None:
     print("Could not retrieve connected devices")
     exit(-1)
 
-for device in devices:
-    encoded = device.get('name', 'NONE')
-    print(device.get('ip', 'NONE') + ': ' + HTMLParser().unescape(encoded))
+print(devices_list(devices))
